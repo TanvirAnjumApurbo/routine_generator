@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Routine Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/static/pdf-template.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .header-bg { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); }
+        .routine-card { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border-radius: 16px; overflow: hidden; }
+        .time-slot { background-color: #eef2ff; border-left: 4px solid #6366f1; }
+        .search-input { transition: all 0.3s ease; }
+        .search-input:focus { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+        .download-btn { transition: all 0.3s ease; }
+        .download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }        .animate-fadeIn { animation: fadeIn 0.5s ease-in; }        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .course-code {
+            /* Removed border and shadow for a cleaner look */
+            font-size: 14px !important; /* Ensure larger font size */
+            font-weight: 1000 !important; /* Ensure bold font */
+            padding: 8px 12px; /* Adjusted padding for larger text */
+            color: #1e3a8a; /* Text color */
+            background: transparent !important; /* Forcefully remove background */
+            white-space: nowrap;
+            flex-shrink: 0;
+            align-self: center; /* Center align vertically */
+            margin-top: 0;
+            height: auto;
+            line-height: 1.5;
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">    <!-- Header -->
+    <div class="gradient-bg text-white py-16">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Logo" class="mx-auto mb-6 h-20 w-auto rounded-lg shadow-lg">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Chrono Forge</h1>
+            <p class="text-xl opacity-90">Your Spring 2025 Final Battle Awaits; Answer the Call — Forge Your Exam Routine Now</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-12">
+        <!-- Search Section -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                <img src="{{ url_for('static', filename='find.png') }}" alt="Find" class="h-6 w-6 inline mr-2">
+                Find Your Course
+            </h3><form method="post" class="flex flex-col gap-6">
+                <div class="flex-grow">                    <input type="text" name="course_codes" id="course_codes"
+                           placeholder="Enter 1-6 course codes"
+                           class="search-input w-full px-5 py-5 rounded-lg border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg shadow-sm" 
+                           required>
+                    <p class="mt-2 text-sm text-gray-500">You can enter 1-6 course codes separated by commas, semicolons, or spaces</p>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-medium py-4 px-12 rounded-lg transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        Generate Exam Schedule
+                    </button>
+                </div>
+            </form>
+        </div>        <!-- Warning Message -->
+        {% if warning %}
+        <div class="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6 animate-fadeIn">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-orange-700">{{ warning }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Results Section (will be shown when courses are found) -->
+        {% if courses %}
+        <div id="resultsSection" class="animate-fadeIn">
+            <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
+                    Your Exam Schedule 
+                    <span class="text-lg text-gray-600">({{ courses|length }} course{{ 's' if courses|length > 1 else '' }})</span>
+                </h2>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="downloadAllRoutines('pdf')" class="download-btn flex items-center bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                        </svg>
+                        Download PDF
+                    </button>
+                    <button onclick="downloadAllRoutines('png')" class="download-btn flex items-center bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Download PNG
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multiple Routine Cards -->
+            <div id="routineCards" class="space-y-6">
+                {% for course in courses %}
+                <div class="routine-card bg-white p-0 mb-6">
+                    <div class="header-bg text-white p-6">
+                        <h3 class="text-xl md:text-2xl font-bold mb-1">{{ course['Course Title'] }}</h3>                        <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm md:text-base">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 opacity-80" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                </svg>
+                                <span>{{ course['Faculty'] }}</span>
+                            </div><div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 opacity-80" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                                </svg>
+                                <span>{{ course['Student'] }} Students</span>
+                            </div>
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 opacity-80" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814l-4.419-2.95-4.419 2.95A1 1 0 014 16V4z" clip-rule="evenodd" />
+                                </svg>
+                                <span>{{ course['Course Code'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">                            <div class="time-slot p-4 rounded-lg">
+                                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800 text-lg leading-tight">{{ course['Date'] }}</h4>
+                                        <p class="text-gray-600 font-medium text-base">{{ course['Weekday'] }}</p>
+                                        <p class="text-indigo-600 font-medium text-lg mt-1">{{ course['Start Time'] }} - {{ course['End Time'] }}</p>
+                                    </div>
+                                    <div class="mt-2 md:mt-0 flex items-center">
+                                        <div class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium mr-2">
+                                            {{ course['Program'] }}
+                                        </div>
+                                        <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                                            {{ course['Slot'] }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Results Message -->
+        {% if error %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 animate-fadeIn">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">{{ error }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>    <script>        // Test if libraries are loaded when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== PAGE LOADED - CHECKING LIBRARIES ===');
+            setTimeout(() => {
+                if (typeof checkLibrariesLoaded === 'function') {
+                    const allLoaded = checkLibrariesLoaded();
+                    console.log('All libraries loaded:', allLoaded);
+                } else {
+                    console.log('❌ checkLibrariesLoaded function not available');
+                }
+            }, 1000);
+        });        // Download all routines as PDF or PNG
+        function downloadAllRoutines(format) {
+            console.log('=== DOWNLOAD FUNCTION CALLED ===');
+            console.log('Format:', format);
+            console.log('Button clicked at:', new Date().toISOString());
+
+            // Check if required libraries are loaded
+            console.log('Checking library availability...');
+            console.log('html2canvas available:', typeof html2canvas !== 'undefined');
+            console.log('jsPDF available:', typeof window.jspdf !== 'undefined');
+            console.log('jsPDF.jsPDF available:', window.jspdf && typeof window.jspdf.jsPDF !== 'undefined');
+            console.log('createBeautifulTemplate available:', typeof createBeautifulTemplate !== 'undefined');
+
+            if (typeof html2canvas === 'undefined') {
+                console.error('❌ html2canvas not loaded');
+                alert('Error: html2canvas library not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+                console.error('❌ jsPDF not loaded');
+                alert('Error: jsPDF library not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            if (typeof createBeautifulTemplate !== 'function') {
+                console.error('❌ createBeautifulTemplate not loaded');
+                alert('Error: PDF template not loaded. Please refresh the page and try again.');
+                return;
+            }
+
+            console.log('✅ All libraries loaded successfully');
+
+            // Show loading indicator
+            console.log('Setting loading state...');
+            const buttons = document.querySelectorAll('.download-btn');
+            console.log('Found', buttons.length, 'download buttons');
+            
+            buttons.forEach((btn, index) => {
+                console.log(`Setting loading state for button ${index}:`, btn);
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generating ${format.toUpperCase()}...
+                `;
+            });
+
+            // Function to restore buttons
+            function restoreButtons() {
+                console.log('Restoring buttons...');
+                buttons.forEach((btn, index) => {
+                    console.log(`Restoring button ${index}`);
+                    btn.disabled = false;
+                    if (btn.onclick.toString().includes("'pdf'")) {
+                        btn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                            </svg>
+                            Download PDF
+                        `;
+                    } else if (btn.onclick.toString().includes("'png'")) {
+                        btn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Download PNG
+                        `;
+                    }
+                });
+            }
+
+            // Get courses data
+            {% if courses %}
+            const courses = {{ courses | tojson }};
+            {% else %}
+            const courses = [];
+            {% endif %}
+
+            console.log('Courses data:', courses);
+            console.log('Courses array length:', courses.length);
+            console.log('Courses is array:', Array.isArray(courses));
+
+            if (!courses.length) {
+                console.error('❌ No courses data found');
+                alert('No courses data available to generate the schedule.');
+                restoreButtons();
+                return;
+            }
+
+            console.log('✅ Found', courses.length, 'courses');
+
+            // Validate courses data structure
+            console.log('🔄 Validating courses data structure...');
+            courses.forEach((course, index) => {
+                console.log(`Course ${index}:`, course);
+                console.log(`Course ${index} keys:`, Object.keys(course));
+            });
+
+            // Create the beautiful template content
+            console.log('🔄 Creating template content...');
+            let templateContent;
+            try {
+                console.log('Calling createBeautifulTemplate with courses:', courses);
+                templateContent = createBeautifulTemplate(courses);
+                console.log('✅ Template content created successfully');
+                console.log('Template Content type:', typeof templateContent);
+                console.log('Template Content length:', templateContent ? templateContent.length : 'null/undefined');
+                console.log('Template Content (first 500 chars):', templateContent ? templateContent.substring(0, 500) : 'No content');
+            } catch (error) {
+                console.error('❌ Error creating template content:', error);
+                console.error('Error stack:', error.stack);
+                alert('Error creating template content: ' + error.message);
+                restoreButtons();
+                return;
+            }
+
+            // Create a temporary container
+            console.log('🔄 Creating temporary container...');
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.top = '-9999px';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.width = '1200px';
+            tempContainer.style.zIndex = '-1000';
+            
+            console.log('Setting innerHTML on temp container...');
+            try {
+                tempContainer.innerHTML = templateContent;
+                console.log('✅ innerHTML set successfully');
+            } catch (error) {
+                console.error('❌ Error setting innerHTML:', error);
+                alert('Error creating temporary content: ' + error.message);
+                restoreButtons();
+                return;
+            }
+            
+            document.body.appendChild(tempContainer);
+            console.log('✅ Temp container added to body');            // Wait a bit for styles to apply
+            setTimeout(() => {
+                // For PNG, we want to capture the outer container with padding
+                // For PDF, we can use the inner content since we handle margins in PDF generation
+                const outerContainer = tempContainer.querySelector('.max-w-7xl'); // Container with padding
+                const contentToExport = tempContainer.querySelector('#content-to-export');
+                
+                console.log('Outer container element:', outerContainer);
+                console.log('Content to export element:', contentToExport);
+                
+                if (!contentToExport || !outerContainer) {
+                    console.error('❌ Required elements not found');
+                    console.log('Temp container HTML:', tempContainer.innerHTML.substring(0, 1000));
+                    console.log('Available elements with IDs:', tempContainer.querySelectorAll('[id]'));
+                    alert('Error: Unable to find the required elements.');
+                    document.body.removeChild(tempContainer);
+                    restoreButtons();
+                    return;
+                }
+
+                console.log('✅ Required elements found');
+                console.log('Content dimensions:', {
+                    width: contentToExport.offsetWidth,
+                    height: contentToExport.offsetHeight,
+                    scrollWidth: contentToExport.scrollWidth,
+                    scrollHeight: contentToExport.scrollHeight
+                });
+
+                // Generate PDF or PNG
+                console.log('🔄 Generating', format.toUpperCase(), '...');
+                if (format === 'pdf') {
+                    console.log('Starting PDF generation...');
+                    html2canvas(contentToExport, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        width: contentToExport.scrollWidth,
+                        height: contentToExport.scrollHeight
+                    }).then(canvas => {                        console.log('✅ Canvas created for PDF');
+                        console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+                        
+                        const imgData = canvas.toDataURL('image/png');
+                        const margin = 12.7; // 0.5 inch in mm (0.5 * 25.4)
+                        
+                        // Calculate content dimensions in mm (at 96 DPI)
+                        const contentWidthMm = (canvas.width * 25.4) / (96 * 2); // Divide by 2 because scale=2
+                        const contentHeightMm = (canvas.height * 25.4) / (96 * 2);
+                        
+                        // Create custom page size with margins
+                        const pageWidthMm = contentWidthMm + (margin * 2);
+                        const pageHeightMm = contentHeightMm + (margin * 2);
+                        
+                        console.log('Content dimensions (mm):', contentWidthMm, 'x', contentHeightMm);
+                        console.log('PDF page size with margins (mm):', pageWidthMm, 'x', pageHeightMm);
+                        
+                        // Create PDF with custom page size
+                        const pdf = new window.jspdf.jsPDF({
+                            orientation: pageWidthMm > pageHeightMm ? 'landscape' : 'portrait',
+                            unit: 'mm',
+                            format: [pageWidthMm, pageHeightMm]
+                        });
+                        
+                        // Add the image with margins
+                        pdf.addImage(imgData, 'PNG', margin, margin, contentWidthMm, contentHeightMm);
+                        
+                        console.log('Saving PDF...');
+                        pdf.save('exam_schedule.pdf');
+                        console.log('✅ PDF generated and downloaded successfully');
+                        document.body.removeChild(tempContainer);
+                        restoreButtons();
+                    }).catch(error => {
+                        console.error('❌ Error generating PDF:', error);
+                        console.error('Error stack:', error.stack);
+                        alert('Error generating the PDF: ' + error.message);
+                        document.body.removeChild(tempContainer);
+                        restoreButtons();
+                    });                } else if (format === 'png') {
+                    console.log('Starting PNG generation...');
+                    // Use outer container with padding for PNG to get proper margins
+                    html2canvas(outerContainer, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        width: outerContainer.scrollWidth,
+                        height: outerContainer.scrollHeight
+                    }).then(canvas => {
+                        console.log('✅ Canvas created for PNG');
+                        console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+                        
+                        const link = document.createElement('a');
+                        link.href = canvas.toDataURL('image/png');
+                        link.download = 'exam_schedule.png';
+                        
+                        console.log('Triggering PNG download...');
+                        link.click();
+                        console.log('✅ PNG generated and downloaded successfully');
+                        document.body.removeChild(tempContainer);
+                        restoreButtons();
+                    }).catch(error => {
+                        console.error('❌ Error generating PNG:', error);
+                        console.error('Error stack:', error.stack);
+                        alert('Error generating the PNG: ' + error.message);
+                        document.body.removeChild(tempContainer);
+                        restoreButtons();
+                    });
+                } else {
+                    console.error('❌ Unsupported format:', format);
+                    alert('Unsupported format. Please select either PDF or PNG.');
+                    document.body.removeChild(tempContainer);
+                    restoreButtons();
+                }            }, 100); // Small delay to ensure styles are applied
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <!-- Credentials -->
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold mb-2">Chrono Forge</h3>
+                    <p class="text-gray-300 text-sm">© 2025 Exam Routine Generator. All rights reserved.</p>
+                    <p class="text-gray-400 text-xs mt-1">Crafted with ❤️ for better exam planning</p>
+                </div>
+                
+                <!-- Social Media Links -->
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-300 text-sm mr-2">Connect with me:</span>
+                    
+                    <!-- LinkedIn -->
+                    <a href="https://www.linkedin.com/in/tanvir-anjum-apurbo-2a8b1620b/" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-300 hover:text-blue-400 transition-colors duration-300 transform hover:scale-110">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                    </a>
+                    
+                    <!-- GitHub -->
+                    <a href="https://github.com/TanvirAnjumApurbo" target="_blank" rel="noopener noreferrer" 
+                       class="text-gray-300 hover:text-gray-100 transition-colors duration-300 transform hover:scale-110">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

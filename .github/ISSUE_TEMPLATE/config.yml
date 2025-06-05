@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/yourusername/routine_generator/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📧 Direct Contact
+    url: mailto:your-email@example.com
+    about: For sensitive issues or private concerns
+  - name: 🎓 University Support
+    url: https://your-university-website.edu/support
+    about: For official academic schedule questions
