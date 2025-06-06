@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, send_from_directory
 import pandas as pd
 import re
 from datetime import datetime
@@ -144,6 +144,20 @@ def test_download():
 def debug():
     """Debug page to test library loading"""
     return render_template('debug.html')
+
+@app.route('/static/preview.png')
+def serve_preview_image():
+    """Serve preview image with proper headers for social media crawlers"""
+    response = send_from_directory('static', 'preview.png')
+    response.headers['Cache-Control'] = 'public, max-age=31536000'  # Cache for 1 year
+    response.headers['Content-Type'] = 'image/png'
+    return response
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon"""
+    from flask import send_from_directory
+    return send_from_directory('static', 'logo.jpg', mimetype='image/vnd.microsoft.icon')
 
 
 if __name__ == '__main__':
