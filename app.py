@@ -157,7 +157,7 @@ def serve_preview_image():
 def favicon():
     """Serve favicon"""
     from flask import send_from_directory
-    return send_from_directory('static', 'logo.jpg', mimetype='image/vnd.microsoft.icon')
+    return send_from_directory('static', 'favicon.png', mimetype='image/vnd.microsoft.icon')
 
 
 if __name__ == '__main__':
