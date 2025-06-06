@@ -63,6 +63,20 @@
    http://localhost:5000
    ```
 
+## 🚀 Deployment
+
+This project is ready for deployment on [Render](https://render.com). See the [DEPLOYMENT.md](DEPLOYMENT.md) file for detailed deployment instructions.
+
+### Quick Deploy to Render
+
+1. Fork this repository
+2. Sign up on [Render](https://render.com)
+3. Connect your GitHub repository
+4. Deploy as a Web Service
+5. Use the included configuration files (`Procfile`, `render.yaml`, `runtime.txt`)
+
+The application will be automatically deployed and accessible worldwide!
+
 ## 📖 How to Use
 
 ### 🔍 Search for Courses
