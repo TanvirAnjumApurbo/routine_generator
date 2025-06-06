@@ -1,7 +1,7 @@
 # 📚 Exam Routine Generator
 
 <div align="center">
-  <img src="static/CF_logo.svg" alt="Exam Routine Generator Logo" width="200" height="200" style="border-radius: 50%;">
+  <img src="static/Clogo.png" alt="Exam Routine Generator Logo" width="500" height="210" style="border-radius: 50%;">
   
   <p><em>A modern, user-friendly web application to generate personalized exam routines</em></p>
   
@@ -175,7 +175,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 
-1. Check the [ISSUES](https://github.com/TanvirAnjumApurbo/routine_generator/issues) page
+1. Check the [ISSUES](https://github.com/TanvirAnjumApurbo/routine_generator/blob/master/ISSUES.md) page
 2. Create a new issue with detailed information
 3. Contact with me
 
